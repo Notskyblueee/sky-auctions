@@ -3,7 +3,9 @@ package com.skyauctions.gui;
 import com.skyauctions.SkyAuctions;
 import com.skyauctions.data.Auction;
 import com.skyauctions.util.ColorUtil;
+import com.skyauctions.util.ItemUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -35,24 +37,34 @@ public class GuiManager {
     }
 
     public void openMain(Player viewer, int page) {
-        List<Auction> active = plugin.getAuctionManager().getActiveListings();
 
-        int maxPage = Math.max(0, (active.size() - 1) / PAGE_SIZE);
+        List<Auction> active =
+                plugin.getAuctionManager().getActiveListings();
+
+        int maxPage =
+                Math.max(0, (active.size() - 1) / PAGE_SIZE);
+
         page = Math.max(0, Math.min(page, maxPage));
 
         SkyAuctionsHolder holder =
-                new SkyAuctionsHolder(SkyAuctionsHolder.Type.MAIN);
+                new SkyAuctionsHolder(
+                        SkyAuctionsHolder.Type.MAIN
+                );
 
-        String title = plugin.getConfig().getString(
-                "settings.gui-title",
-                "&0Auction House"
-        );
+        String title =
+                plugin.getConfig().getString(
+                        "settings.gui-title",
+                        "&0Auction House"
+                );
 
-        Inventory inv = Bukkit.createInventory(
-                holder,
-                ROWS * 9,
-                ColorUtil.color(title + " &8#" + (page + 1))
-        );
+        Inventory inv =
+                Bukkit.createInventory(
+                        holder,
+                        ROWS * 9,
+                        ColorUtil.color(
+                                title + " &8#" + (page + 1)
+                        )
+                );
 
         holder.setInventory(inv);
         holder.setPage(page);
@@ -62,16 +74,23 @@ public class GuiManager {
         }
 
         int start = page * PAGE_SIZE;
-        int end = Math.min(start + PAGE_SIZE, active.size());
+        int end = Math.min(
+                start + PAGE_SIZE,
+                active.size()
+        );
 
         for (int i = start; i < end; i++) {
+
             Auction auction = active.get(i);
 
             int slot = i - start;
 
             inv.setItem(
                     slot,
-                    buildListingIcon(auction, viewer)
+                    buildListingIcon(
+                            auction,
+                            viewer
+                    )
             );
 
             holder.mapSlot(
@@ -80,7 +99,11 @@ public class GuiManager {
             );
         }
 
-        fillNavigation(inv, page, maxPage);
+        fillNavigation(
+                inv,
+                page,
+                maxPage
+        );
 
         viewer.openInventory(inv);
     }
@@ -95,10 +118,10 @@ public class GuiManager {
             inv.setItem(slot, filler());
         }
 
-        /*
-         * END CHEST
-         * Items You are Selling
-         */
+        // =================================================
+        // ITEMS YOU ARE SELLING
+        // =================================================
+
         inv.setItem(
                 SOLD_SLOT,
                 namedItem(
@@ -111,10 +134,10 @@ public class GuiManager {
                 )
         );
 
-        /*
-         * GLOWSTONE
-         * Collect Expired / Canceled Items
-         */
+        // =================================================
+        // EXPIRED / CANCELLED ITEMS
+        // =================================================
+
         inv.setItem(
                 EXPIRED_SLOT,
                 namedItem(
@@ -127,23 +150,41 @@ public class GuiManager {
                 )
         );
 
-        /*
-         * PREVIOUS PAGE
-         */
-        inv.setItem(
-                PREV_SLOT,
-                namedItem(
-                        Material.RED_SHULKER_BOX,
-                        "&6Previous Page",
-                        List.of(
-                                "&7Empty"
-                        )
-                )
-        );
+        // =================================================
+        // PREVIOUS PAGE
+        // =================================================
 
-        /*
-         * REFRESH PAGE
-         */
+        if (page > 0) {
+
+            inv.setItem(
+                    PREV_SLOT,
+                    namedItem(
+                            Material.RED_SHULKER_BOX,
+                            "&6Previous Page",
+                            List.of(
+                                    "&7Empty"
+                            )
+                    )
+            );
+
+        } else {
+
+            inv.setItem(
+                    PREV_SLOT,
+                    namedItem(
+                            Material.RED_SHULKER_BOX,
+                            "&6Previous Page",
+                            List.of(
+                                    "&7Empty"
+                            )
+                    )
+            );
+        }
+
+        // =================================================
+        // REFRESH PAGE
+        // =================================================
+
         inv.setItem(
                 REFRESH_SLOT,
                 namedItem(
@@ -153,23 +194,41 @@ public class GuiManager {
                 )
         );
 
-        /*
-         * NEXT PAGE
-         */
-        inv.setItem(
-                NEXT_SLOT,
-                namedItem(
-                        Material.LIME_SHULKER_BOX,
-                        "&6Next Page",
-                        List.of(
-                                "&7Empty"
-                        )
-                )
-        );
+        // =================================================
+        // NEXT PAGE
+        // =================================================
 
-        /*
-         * INFORMATION BOOK
-         */
+        if (page < maxPage) {
+
+            inv.setItem(
+                    NEXT_SLOT,
+                    namedItem(
+                            Material.LIME_SHULKER_BOX,
+                            "&6Next Page",
+                            List.of(
+                                    "&7Empty"
+                            )
+                    )
+            );
+
+        } else {
+
+            inv.setItem(
+                    NEXT_SLOT,
+                    namedItem(
+                            Material.LIME_SHULKER_BOX,
+                            "&6Next Page",
+                            List.of(
+                                    "&7Empty"
+                            )
+                    )
+            );
+        }
+
+        // =================================================
+        // INFORMATION BOOK
+        // =================================================
+
         inv.setItem(
                 INFO_SLOT,
                 namedItem(
@@ -188,55 +247,83 @@ public class GuiManager {
         );
     }
 
-    /*
-     * AUCTION ITEM LORE
-     */
+    // =====================================================
+    // AUCTION ITEM
+    // =====================================================
+
     private ItemStack buildListingIcon(
             Auction auction,
             Player viewer
     ) {
 
-        ItemStack display = auction.getItem().clone();
+        ItemStack display =
+                auction.getItem().clone();
 
-        ItemMeta meta = display.getItemMeta();
+        ItemMeta meta =
+                display.getItemMeta();
 
-        List<String> loreLines = new ArrayList<>();
+        List<String> loreLines =
+                new ArrayList<>();
 
-        String currency = plugin.getConfig().getString(
-                "settings.currency-symbol",
-                "$"
+        String currency =
+                plugin.getConfig().getString(
+                        "settings.currency-symbol",
+                        "$"
+                );
+
+        loreLines.add(
+                "&8&m--------------------"
         );
 
-        loreLines.add("&8&m--------------------");
+        loreLines.add(
+                "&#A78BFA&lSELLER"
+        );
 
-        loreLines.add("&#A78BFA&lSELLER");
-        loreLines.add("&f" + auction.getSellerName());
+        loreLines.add(
+                "&f" + auction.getSellerName()
+        );
 
         loreLines.add("");
 
-        loreLines.add("&#A78BFA&lPRICE");
+        loreLines.add(
+                "&#A78BFA&lPRICE"
+        );
+
         loreLines.add(
                 "&f"
                         + plugin.getEconomyManager()
-                        .format(auction.getPrice())
+                        .format(
+                                auction.getPrice()
+                        )
                         + currency
         );
 
-        loreLines.add("&#A78BFA&lAMOUNT");
-        loreLines.add("&f" + display.getAmount());
-
-        loreLines.add("");
-
-        loreLines.add("&#A78BFA&lTIME LEFT");
         loreLines.add(
-                "&f" + formatTimeLeft(
-                        auction.getExpiresAt()
-                )
+                "&#A78BFA&lAMOUNT"
+        );
+
+        loreLines.add(
+                "&f" + display.getAmount()
         );
 
         loreLines.add("");
 
-        if (auction.getSellerId().equals(viewer.getUniqueId())) {
+        loreLines.add(
+                "&#A78BFA&lTIME LEFT"
+        );
+
+        loreLines.add(
+                "&f"
+                        + formatTimeLeft(
+                                auction.getExpiresAt()
+                        )
+        );
+
+        loreLines.add("");
+
+        if (auction.getSellerId().equals(
+                viewer.getUniqueId()
+        )) {
 
             loreLines.add(
                     "&c✦ Click to cancel your listing"
@@ -249,10 +336,16 @@ public class GuiManager {
             );
         }
 
-        loreLines.add("&8&m--------------------");
+        loreLines.add(
+                "&8&m--------------------"
+        );
 
         meta.lore(
-                ColorUtil.colorList(loreLines)
+                noItalicLore(
+                        ColorUtil.colorList(
+                                loreLines
+                        )
+                )
         );
 
         meta.addItemFlags(
@@ -264,9 +357,10 @@ public class GuiManager {
         return display;
     }
 
-    /*
-     * SOLD ITEMS
-     */
+    // =====================================================
+    // SOLD ITEMS
+    // =====================================================
+
     public void openSoldItems(Player viewer) {
 
         List<Auction> sold =
@@ -284,7 +378,9 @@ public class GuiManager {
                 Bukkit.createInventory(
                         holder,
                         54,
-                        ColorUtil.color("&0Sold Items")
+                        ColorUtil.color(
+                                "&0Sold Items"
+                        )
                 );
 
         holder.setInventory(inv);
@@ -293,7 +389,11 @@ public class GuiManager {
             inv.setItem(slot, filler());
         }
 
-        for (int i = 0; i < Math.min(45, sold.size()); i++) {
+        for (
+                int i = 0;
+                i < Math.min(45, sold.size());
+                i++
+        ) {
 
             Auction auction = sold.get(i);
 
@@ -310,43 +410,49 @@ public class GuiManager {
                     );
 
             meta.lore(
-                    ColorUtil.colorList(
-                            List.of(
-                                    "&8&m--------------------",
+                    noItalicLore(
+                            ColorUtil.colorList(
+                                    List.of(
+                                            "&8&m--------------------",
 
-                                    "&#A78BFA&lSOLD TO",
+                                            "&#A78BFA&lSOLD TO",
 
-                                    "&f"
-                                            + (
-                                            auction.getBuyerName() == null
-                                                    ? "Unknown"
-                                                    : auction.getBuyerName()
-                                    ),
+                                            "&f"
+                                                    + (
+                                                    auction.getBuyerName()
+                                                            == null
+                                                            ? "Unknown"
+                                                            : auction.getBuyerName()
+                                            ),
 
-                                    "",
+                                            "",
 
-                                    "&#A78BFA&lEARNED",
+                                            "&#A78BFA&lEARNED",
 
-                                    "&f"
-                                            + plugin
-                                            .getEconomyManager()
-                                            .format(
-                                                    auction.getPendingBalance()
-                                            )
-                                            + currency,
+                                            "&f"
+                                                    + plugin
+                                                    .getEconomyManager()
+                                                    .format(
+                                                            auction.getPendingBalance()
+                                                    )
+                                                    + currency,
 
-                                    "",
+                                            "",
 
-                                    "&a✦ Click to collect",
+                                            "&a✦ Click to collect",
 
-                                    "&8&m--------------------"
+                                            "&8&m--------------------"
+                                    )
                             )
                     )
             );
 
             display.setItemMeta(meta);
 
-            inv.setItem(i, display);
+            inv.setItem(
+                    i,
+                    display
+            );
 
             holder.mapSlot(
                     i,
@@ -391,9 +497,10 @@ public class GuiManager {
         viewer.openInventory(inv);
     }
 
-    /*
-     * EXPIRED / CANCELLED ITEMS
-     */
+    // =====================================================
+    // EXPIRED ITEMS
+    // =====================================================
+
     public void openExpiredItems(Player viewer) {
 
         List<Auction> expired =
@@ -438,36 +545,41 @@ public class GuiManager {
                     display.getItemMeta();
 
             meta.lore(
-                    ColorUtil.colorList(
-                            List.of(
-                                    "&8&m--------------------",
+                    noItalicLore(
+                            ColorUtil.colorList(
+                                    List.of(
+                                            "&8&m--------------------",
 
-                                    "&#FFD166&lSTATUS",
+                                            "&#FFD166&lSTATUS",
 
-                                    "&f"
-                                            + (
-                                            auction.getStatus()
-                                                    == Auction.Status.EXPIRED
-                                                    ? "Expired"
-                                                    : "Cancelled"
-                                    ),
+                                            "&f"
+                                                    + (
+                                                    auction.getStatus()
+                                                            == Auction.Status.EXPIRED
+                                                            ? "Expired"
+                                                            : "Cancelled"
+                                            ),
 
-                                    "",
+                                            "",
 
-                                    "&7This item is waiting to be returned to you.",
+                                            "&7This item is waiting to be returned to you.",
 
-                                    "",
+                                            "",
 
-                                    "&a✦ Click to collect item",
+                                            "&a✦ Click to collect item",
 
-                                    "&8&m--------------------"
+                                            "&8&m--------------------"
+                                    )
                             )
                     )
             );
 
             display.setItemMeta(meta);
 
-            inv.setItem(i, display);
+            inv.setItem(
+                    i,
+                    display
+            );
 
             holder.mapSlot(
                     i,
@@ -512,9 +624,10 @@ public class GuiManager {
         viewer.openInventory(inv);
     }
 
-    /*
-     * MY ACTIVE LISTINGS
-     */
+    // =====================================================
+    // MY LISTINGS
+    // =====================================================
+
     public void openMyListings(Player viewer) {
 
         List<Auction> mine =
@@ -603,9 +716,10 @@ public class GuiManager {
         viewer.openInventory(inv);
     }
 
-    /*
-     * INFORMATION GUI
-     */
+    // =====================================================
+    // INFORMATION
+    // =====================================================
+
     public void openInfo(Player viewer) {
 
         SkyAuctionsHolder holder =
@@ -692,9 +806,10 @@ public class GuiManager {
         viewer.openInventory(inv);
     }
 
-    /*
-     * SELL PRICE ANVIL
-     */
+    // =====================================================
+    // SELL ANVIL
+    // =====================================================
+
     public void openSellAnvil(
             Player player,
             ItemStack itemToSell
@@ -728,9 +843,10 @@ public class GuiManager {
         player.openInventory(inv);
     }
 
-    /*
-     * CREATE GUI ITEM
-     */
+    // =====================================================
+    // NAMED GUI ITEM
+    // =====================================================
+
     private ItemStack namedItem(
             Material material,
             String name,
@@ -743,13 +859,26 @@ public class GuiManager {
         ItemMeta meta =
                 item.getItemMeta();
 
+        /*
+         * Disable Minecraft's default italic
+         * on item name.
+         */
         meta.displayName(
-                ColorUtil.color(name)
+                noItalic(
+                        ColorUtil.color(name)
+                )
         );
 
+        /*
+         * Disable Minecraft's default italic
+         * on all lore lines.
+         */
         if (!lore.isEmpty()) {
+
             meta.lore(
-                    ColorUtil.colorList(lore)
+                    noItalicLore(
+                            ColorUtil.colorList(lore)
+                    )
             );
         }
 
@@ -758,9 +887,37 @@ public class GuiManager {
         return item;
     }
 
-    /*
-     * GUI BACKGROUND
-     */
+    // =====================================================
+    // REMOVE ITALIC FROM COMPONENT
+    // =====================================================
+
+    private Component noItalic(
+            Component component
+    ) {
+
+        return component.decoration(
+                TextDecoration.ITALIC,
+                false
+        );
+    }
+
+    // =====================================================
+    // REMOVE ITALIC FROM LORE
+    // =====================================================
+
+    private List<Component> noItalicLore(
+            List<Component> lore
+    ) {
+
+        return lore.stream()
+                .map(this::noItalic)
+                .toList();
+    }
+
+    // =====================================================
+    // FILLER
+    // =====================================================
+
     private ItemStack filler() {
 
         ItemStack item =
@@ -780,9 +937,10 @@ public class GuiManager {
         return item;
     }
 
-    /*
-     * FORMAT AUCTION TIME
-     */
+    // =====================================================
+    // TIME FORMAT
+    // =====================================================
+
     private String formatTimeLeft(
             long expiresAt
     ) {
@@ -810,11 +968,19 @@ public class GuiManager {
                 seconds / 60;
 
         if (days > 0) {
-            return days + "d " + hours + "h";
+
+            return days
+                    + "d "
+                    + hours
+                    + "h";
         }
 
         if (hours > 0) {
-            return hours + "h " + minutes + "m";
+
+            return hours
+                    + "h "
+                    + minutes
+                    + "m";
         }
 
         return minutes + "m";
