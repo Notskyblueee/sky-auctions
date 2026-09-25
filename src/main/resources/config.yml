@@ -1,0 +1,38 @@
+# =========================================================
+#                    SkyAuctions
+#                  Premium GUI Config
+# =========================================================
+
+settings:
+  gui-title: "&0Auction House"
+  gui-rows: 6
+  listing-duration-hours: 48
+  min-price: 1.0
+  max-price: 1000000.0
+  sale-tax-percent: 5.0
+  default-listing-limit: 5
+  currency-symbol: "$"
+
+# Premium sale announcement shown above the hotbar.
+broadcast:
+  enabled: true
+  action-bar: true
+  format: "&#A78BFA✦ &f%player% &7ʜᴀs ᴘᴜᴛ &#C4B5FD%amount%x %item% &7ɪɴ ᴀᴜᴄᴛɪᴏɴ ғᴏʀ &#A78BFA%price%%currency% &7✦"
+
+integrations:
+  vault: true
+  placeholderapi: true
+  shopguiplus: true
+  economyshopgui: true
+
+storage:
+  type: YAML
+  autosave-interval: 5
+
+blocked-items:
+  - AIR
+  - BEDROCK
+  - COMMAND_BLOCK
+  - BARRIER
+
+config-version: 2

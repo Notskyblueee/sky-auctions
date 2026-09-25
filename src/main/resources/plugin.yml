@@ -1,0 +1,100 @@
+name: SkyAuctions
+version: '${project.version}'
+main: com.skyauctions.SkyAuctions
+api-version: '1.21'
+author: SkyAuctions
+description: Premium, modern Auction House for Paper 1.21.x
+softdepend: [Vault, PlaceholderAPI, ShopGUIPlus, EconomyShopGUI]
+
+commands:
+  skyauctions:
+    aliases: [ah, auction]
+    description: Open and manage the SkyAuctions auction house
+    usage: /<command> [help|sell|bid|collect|expired|listed|view|remove|reload|force_end_all|test]
+
+permissions:
+  skyauctions.*:
+    description: Grants every SkyAuctions permission
+    default: op
+    children:
+      skyauctions.use: true
+      skyauctions.sell: true
+      skyauctions.collect: true
+      skyauctions.admin: true
+      skyauctions.admin.reload: true
+      skyauctions.admin.remove: true
+      skyauctions.admin.remove.others: true
+      skyauctions.admin.force-end: true
+      skyauctions.admin.test: true
+      skyauctions.bypass.price: true
+      skyauctions.bypass.limit: true
+      skyauctions.bypass.tax: true
+      skyauctions.notify.sale: true
+
+  skyauctions.use:
+    description: Allows opening the /ah or /auction GUI
+    default: true
+
+  skyauctions.sell:
+    description: Allows listing items for sale
+    default: true
+
+  skyauctions.collect:
+    description: Allows collecting sold and returned items
+    default: true
+
+  skyauctions.notify.sale:
+    description: Receive the premium action-bar sale announcement
+    default: true
+
+  skyauctions.admin:
+    description: Base admin permission
+    default: op
+
+  skyauctions.admin.reload:
+    description: Allows /ah reload
+    default: op
+
+  skyauctions.admin.remove:
+    description: Allows /ah remove <id> on your own listings
+    default: op
+
+  skyauctions.admin.remove.others:
+    description: Allows removing any player's listing
+    default: op
+
+  skyauctions.admin.force-end:
+    description: Allows /ah force_end_all
+    default: op
+
+  skyauctions.admin.test:
+    description: Allows /ah test
+    default: op
+
+  skyauctions.bypass.price:
+    description: Bypass min/max listing price
+    default: op
+
+  skyauctions.bypass.limit:
+    description: Bypass active listing limits
+    default: op
+
+  skyauctions.bypass.tax:
+    description: Sell without sale tax
+    default: op
+
+  skyauctions.slots.5:
+    description: Allows up to 5 active listings
+    default: true
+
+  skyauctions.slots.10:
+    description: Allows up to 10 active listings
+    default: false
+
+  skyauctions.slots.20:
+    description: Allows up to 20 active listings
+    default: false
+
+  skyauctions.slots.50:
+    description: Allows up to 50 active listings
+    default: false

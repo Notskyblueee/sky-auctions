@@ -1,0 +1,80 @@
+# SkyAuctions premium messages
+# Hex: &#RRGGBB | Legacy: &a &c &l
+
+prefix: "&8[&#A78BFA&lSᴋʏAᴜᴄᴛɪᴏɴs&8] "
+
+general:
+  no-permission: "%prefix%&cYou don't have permission to do that."
+  player-only: "%prefix%&cOnly players can use this command."
+  reloaded: "%prefix%&#86EFACConfiguration reloaded successfully."
+  unknown-command: "%prefix%&cUnknown command. Use &#C4B5FD/ah help&c."
+  invalid-price: "%prefix%&cPlease enter a valid price."
+
+sell:
+  usage: "%prefix%&7Usage: &#C4B5FD/ah sell <price>"
+  hand-empty: "%prefix%&cYou need to hold an item to sell."
+  item-blocked: "%prefix%&cThis item cannot be listed."
+  price-too-low: "%prefix%&cMinimum price: &#A78BFA%min%%currency%&c."
+  price-too-high: "%prefix%&cMaximum price: &#A78BFA%max%%currency%&c."
+  limit-reached: "%prefix%&cListing limit reached: &f%current%/%maxlimit%&c."
+  success: "%prefix%&#86EFACListed &f%amount%x %item% &#86EFACfor &f%price%%currency%&#86EFAC."
+
+buy:
+  confirm-title: "&0Confirm Purchase"
+  cannot-buy-own: "%prefix%&cYou cannot purchase your own listing."
+  already-sold: "%prefix%&cThis listing is no longer available."
+  not-enough-money: "%prefix%&cYou don't have enough money."
+  inventory-full: "%prefix%&cYour inventory is full."
+  economy-disabled: "%prefix%&cNo Vault economy is available."
+  success-buyer: "%prefix%&#86EFACPurchased &f%amount%x %item% &#86EFACfor &f%price%%currency%&#86EFAC."
+  success-seller: "%prefix%&f%buyer% &7purchased your &f%amount%x %item% &7for &f%price%%currency%&7."
+
+remove:
+  usage: "%prefix%&7Usage: &#C4B5FD/ah remove <id>"
+  not-found: "%prefix%&cListing not found."
+  not-yours: "%prefix%&cThat isn't your listing."
+  success: "%prefix%&#86EFACListing cancelled. The item is now in your expired/returned box."
+
+collect:
+  empty: "%prefix%&7You have nothing to collect."
+  item-collected: "%prefix%&#86EFACItem collected successfully."
+  items-collected: "%prefix%&#86EFACCollected &f%amount% &7returned item(s)."
+  money-collected: "%prefix%&#86EFACCollected &f%price%%currency%&#86EFAC."
+  full-inventory: "%prefix%&cMake some space in your inventory first."
+
+expire:
+  expired-notice: "%prefix%&7Your listing for &f%item% &7expired and is waiting in your returned items."
+
+bid:
+  usage: "%prefix%&7Usage: &#C4B5FD/ah bid <listing-id>"
+
+view:
+  details: "%prefix%&#A78BFA%item% &7• Seller: &f%seller% &7• Price: &f%price%%currency% &7• ID: &8%id%"
+
+admin:
+  force-end: "%prefix%&#86EFACForce-ended &f%amount% &7active listing(s)."
+
+test:
+  actionbar: "&#A78BFA✦ &fSᴋʏAᴜᴄᴛɪᴏɴs &7action bar is working &8• &#C4B5FDPremium UI"
+
+gui:
+  no-listings: "&7No active listings right now."
+  page-info: "&7Page &f%page%&7/&f%max%"
+  item-price-lore: "&7Price: &f%price%%currency%"
+  item-seller-lore: "&7Seller: &f%seller%"
+  item-amount-lore: "&7Amount: &f%amount%"
+  click-to-buy: "&a✦ Click to purchase"
+  click-to-remove: "&c✦ Click to cancel listing"
+
+help:
+  header: "&8&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  line-open: "&f/ah &7or &f/auction &8→ &7Open the auction house"
+  line-sell: "&f/ah sell <price> &8→ &7List the item in your hand"
+  line-listed: "&f/ah listed &8→ &7View your active listings"
+  line-collect: "&f/ah collect &8→ &7Collect all sold/returned items"
+  line-expired: "&f/ah expired &8→ &7View expired/returned items"
+  line-bid: "&f/ah bid <id> &8→ &7Purchase a listing by ID"
+  line-view: "&f/ah view <id> &8→ &7View listing details"
+  line-reload: "&f/ah reload &8→ &7Reload plugin configuration"
+  line-force-end: "&f/ah force_end_all &8→ &7Force-expire every active listing"
+  line-test: "&f/ah test &8→ &7Test the premium action bar"
