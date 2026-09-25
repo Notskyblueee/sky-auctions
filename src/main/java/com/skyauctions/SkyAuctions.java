@@ -26,86 +26,238 @@ public final class SkyAuctions extends JavaPlugin {
 
     @Override
     public void onEnable() {
+
+        // ---------------------------------------------------------
+        // Initialize managers
+        // ---------------------------------------------------------
+
         this.configManager = new ConfigManager(this);
         this.economyManager = new EconomyManager(this);
         this.shopIntegration = new ShopIntegration(this);
         this.auctionManager = new AuctionManager(this);
         this.guiManager = new GuiManager(this);
 
-        getServer().getPluginManager().registerEvents(new GuiListener(this), this);
+        // ---------------------------------------------------------
+        // Register listeners
+        // ---------------------------------------------------------
+
+        getServer().getPluginManager().registerEvents(
+                new GuiListener(this),
+                this
+        );
+
+        // ---------------------------------------------------------
+        // Register /skyauctions
+        // Aliases:
+        // /ah
+        // /auction
+        // ---------------------------------------------------------
 
         SkyAuctionsCommand executor = new SkyAuctionsCommand(this);
+
         var command = getCommand("skyauctions");
-        if (command != null) {
+
+        if (command == null) {
+            getLogger().severe(
+                    "Command 'skyauctions' could not be found in plugin.yml!"
+            );
+        } else {
             command.setExecutor(executor);
             command.setTabCompleter(executor);
+
+            getLogger().info(
+                    "Registered /skyauctions, /ah and /auction."
+            );
         }
 
-        if (getConfig().getBoolean("integrations.placeholderapi", true)
-                && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+        // ---------------------------------------------------------
+        // PlaceholderAPI
+        // ---------------------------------------------------------
+
+        if (getConfig().getBoolean(
+                "integrations.placeholderapi",
+                true
+        )
+                && Bukkit.getPluginManager()
+                .getPlugin("PlaceholderAPI") != null) {
+
             new SkyAuctionsExpansion(this).register();
-            getLogger().info("Hooked into PlaceholderAPI.");
+
+            getLogger().info(
+                    "Hooked into PlaceholderAPI."
+            );
         }
+
+        // ---------------------------------------------------------
+        // Vault Economy
+        // ---------------------------------------------------------
 
         if (economyManager.isEnabled()) {
-            getLogger().info("Hooked into Vault economy.");
+            getLogger().info(
+                    "Hooked into Vault economy."
+            );
+        } else {
+            getLogger().warning(
+                    "Vault economy is not available."
+            );
         }
+
+        // ---------------------------------------------------------
+        // ShopGUIPlus
+        // ---------------------------------------------------------
+
         if (shopIntegration.isShopGuiPlusEnabled()) {
-            getLogger().info("Hooked into ShopGUIPlus for price hints.");
+            getLogger().info(
+                    "Hooked into ShopGUIPlus for price hints."
+            );
         }
+
+        // ---------------------------------------------------------
+        // EconomyShopGUI
+        // ---------------------------------------------------------
+
         if (shopIntegration.isEconomyShopGuiEnabled()) {
-            getLogger().info("Hooked into EconomyShopGUI for price hints.");
+            getLogger().info(
+                    "Hooked into EconomyShopGUI for price hints."
+            );
         }
 
-        // Expire listings + autosave, once a minute
-        int autosaveTicks = 20 * 60; // 1 minute
-        Bukkit.getScheduler().runTaskTimer(this, () -> auctionManager.processExpirations(), autosaveTicks, autosaveTicks);
+        // ---------------------------------------------------------
+        // Expiration processor + autosave
+        // Runs once every minute
+        // ---------------------------------------------------------
 
-        getLogger().info("SkyAuctions has been enabled.");
+        int autosaveTicks = 20 * 60;
+
+        Bukkit.getScheduler().runTaskTimer(
+                this,
+                () -> auctionManager.processExpirations(),
+                autosaveTicks,
+                autosaveTicks
+        );
+
+        // ---------------------------------------------------------
+        // Plugin enabled
+        // ---------------------------------------------------------
+
+        getLogger().info(
+                "SkyAuctions has been enabled."
+        );
     }
+
+    // =============================================================
+    // DISABLE
+    // =============================================================
 
     @Override
     public void onDisable() {
+
         if (auctionManager != null) {
             auctionManager.save();
         }
-        getLogger().info("SkyAuctions has been disabled.");
+
+        getLogger().info(
+                "SkyAuctions has been disabled."
+        );
     }
+
+    // =============================================================
+    // AUCTION SALE BROADCAST
+    // =============================================================
 
     /**
-     * Broadcasts (action bar or chat, per config) that a player just listed an item.
+     * Broadcasts a message when a player lists an item.
+     *
+     * Supports:
+     * - Action bar
+     * - Chat
+     * - Permissions
+     * - Configurable currency
+     * - Configurable message format
      */
-    public void broadcastSale(Player seller, ItemStack item, double price) {
-        if (!getConfig().getBoolean("broadcast.enabled", true)) {
+    public void broadcastSale(
+            Player seller,
+            ItemStack item,
+            double price
+    ) {
+
+        // Broadcast disabled
+        if (!getConfig().getBoolean(
+                "broadcast.enabled",
+                true
+        )) {
             return;
         }
-        String currency = getConfig().getString("settings.currency-symbol", "$");
-        String format = getConfig().getString("broadcast.format",
-                "%player% listed %amount%x %item% for %price%%currency%");
-        format = format.replace("%player%", seller.getName())
-                .replace("%amount%", String.valueOf(item.getAmount()))
-                .replace("%item%", ItemUtil.niceName(item))
-                .replace("%price%", economyManager.format(price))
-                .replace("%currency%", currency);
 
+        // Currency symbol
+        String currency = getConfig().getString(
+                "settings.currency-symbol",
+                "$"
+        );
+
+        // Message format
+        String format = getConfig().getString(
+                "broadcast.format",
+                "%player% listed %amount%x %item% for %price%%currency%"
+        );
+
+        // Replace placeholders
+        format = format
+                .replace(
+                        "%player%",
+                        seller.getName()
+                )
+                .replace(
+                        "%amount%",
+                        String.valueOf(item.getAmount())
+                )
+                .replace(
+                        "%item%",
+                        ItemUtil.niceName(item)
+                )
+                .replace(
+                        "%price%",
+                        economyManager.format(price)
+                )
+                .replace(
+                        "%currency%",
+                        currency
+                );
+
+        // Convert colors
         Component component = ColorUtil.color(format);
-        boolean actionBar = getConfig().getBoolean("broadcast.action-bar", true);
 
+        // Action bar or chat
+        boolean actionBar = getConfig().getBoolean(
+                "broadcast.action-bar",
+                true
+        );
+
+        // Send to online players
         for (Player online : Bukkit.getOnlinePlayers()) {
-            if (!online.hasPermission("skyauctions.notify.sale")) {
+
+            // Only players with notification permission receive it
+            if (!online.hasPermission(
+                    "skyauctions.notify.sale"
+            )) {
                 continue;
             }
+
             if (actionBar) {
+
                 online.sendActionBar(component);
+
             } else {
+
                 online.sendMessage(component);
+
             }
         }
     }
 
-    // ---------------------------------------------------------------
-    //  Accessors
-    // ---------------------------------------------------------------
+    // =============================================================
+    // ACCESSORS
+    // =============================================================
 
     public ConfigManager getConfigManager() {
         return configManager;
