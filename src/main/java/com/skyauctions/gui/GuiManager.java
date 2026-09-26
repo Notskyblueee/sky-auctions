@@ -30,6 +30,11 @@ public class GuiManager {
     public static final int NEXT_SLOT = 50;       // Green Shulker
     public static final int INFO_SLOT = 53;       // Book
 
+    // Confirm Purchase / Confirm Listing popup slots
+    private static final int CONFIRM_ITEM_SLOT = 13;
+    public static final int CONFIRM_YES_SLOT = 11;
+    public static final int CONFIRM_NO_SLOT = 15;
+
     private final SkyAuctions plugin;
 
     public GuiManager(SkyAuctions plugin) {
@@ -841,6 +846,141 @@ public class GuiManager {
         );
 
         player.openInventory(inv);
+    }
+
+    // =====================================================
+    // CONFIRM PURCHASE (popup shown before an auction is bought)
+    // =====================================================
+
+    public void openConfirmPurchase(Player viewer, Auction auction, int returnPage) {
+
+        ConfirmGuiHolder holder = new ConfirmGuiHolder(ConfirmGuiHolder.Action.PURCHASE);
+
+        Inventory inv = Bukkit.createInventory(
+                holder,
+                27,
+                ColorUtil.color("&0Confirm Purchase")
+        );
+
+        holder.setInventory(inv);
+        holder.setAuctionId(auction.getId());
+        holder.setReturnPage(returnPage);
+
+        for (int slot = 0; slot < 27; slot++) {
+            inv.setItem(slot, filler());
+        }
+
+        String currency = plugin.getConfig().getString("settings.currency-symbol", "$");
+
+        ItemStack preview = auction.getItem().clone();
+        ItemMeta previewMeta = preview.getItemMeta();
+        previewMeta.lore(
+                noItalicLore(
+                        ColorUtil.colorList(List.of(
+                                "&8&m--------------------",
+                                "&#A78BFA&lSELLER",
+                                "&f" + auction.getSellerName(),
+                                "",
+                                "&#A78BFA&lPRICE",
+                                "&f" + plugin.getEconomyManager().format(auction.getPrice()) + currency,
+                                "&8&m--------------------"
+                        ))
+                )
+        );
+        previewMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        preview.setItemMeta(previewMeta);
+        inv.setItem(CONFIRM_ITEM_SLOT, preview);
+
+        inv.setItem(
+                CONFIRM_YES_SLOT,
+                namedItem(
+                        Material.LIME_CONCRETE,
+                        "&a&lCONFIRM PURCHASE",
+                        List.of(
+                                "&7Click to buy this item for",
+                                "&f" + plugin.getEconomyManager().format(auction.getPrice()) + currency
+                        )
+                )
+        );
+
+        inv.setItem(
+                CONFIRM_NO_SLOT,
+                namedItem(
+                        Material.RED_CONCRETE,
+                        "&c&lCANCEL",
+                        List.of(
+                                "&7Go back without buying"
+                        )
+                )
+        );
+
+        viewer.openInventory(inv);
+    }
+
+    // =====================================================
+    // CONFIRM LISTING (popup shown before an item is put on sale)
+    // =====================================================
+
+    public void openConfirmSell(Player viewer, ItemStack item, double price) {
+
+        ConfirmGuiHolder holder = new ConfirmGuiHolder(ConfirmGuiHolder.Action.SELL);
+
+        Inventory inv = Bukkit.createInventory(
+                holder,
+                27,
+                ColorUtil.color("&0Confirm Listing")
+        );
+
+        holder.setInventory(inv);
+        holder.setPendingItem(item.clone());
+        holder.setPendingPrice(price);
+
+        for (int slot = 0; slot < 27; slot++) {
+            inv.setItem(slot, filler());
+        }
+
+        String currency = plugin.getConfig().getString("settings.currency-symbol", "$");
+
+        ItemStack preview = item.clone();
+        ItemMeta previewMeta = preview.getItemMeta();
+        previewMeta.lore(
+                noItalicLore(
+                        ColorUtil.colorList(List.of(
+                                "&8&m--------------------",
+                                "&#A78BFA&lLISTING PRICE",
+                                "&f" + plugin.getEconomyManager().format(price) + currency,
+                                "&8&m--------------------"
+                        ))
+                )
+        );
+        previewMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        preview.setItemMeta(previewMeta);
+        inv.setItem(CONFIRM_ITEM_SLOT, preview);
+
+        inv.setItem(
+                CONFIRM_YES_SLOT,
+                namedItem(
+                        Material.LIME_CONCRETE,
+                        "&a&lCONFIRM LISTING",
+                        List.of(
+                                "&7List this item for",
+                                "&f" + plugin.getEconomyManager().format(price) + currency
+                        )
+                )
+        );
+
+        inv.setItem(
+                CONFIRM_NO_SLOT,
+                namedItem(
+                        Material.RED_CONCRETE,
+                        "&c&lCANCEL",
+                        List.of(
+                                "&7Return the item to your inventory"
+                        )
+                )
+        );
+
+        viewer.openInventory(inv);
     }
 
     // =====================================================
