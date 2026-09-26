@@ -3,6 +3,7 @@ package com.skyauctions.listeners;
 import com.skyauctions.SkyAuctions;
 import com.skyauctions.data.Auction;
 import com.skyauctions.data.AuctionManager;
+import com.skyauctions.gui.ConfirmGuiHolder;
 import com.skyauctions.gui.GuiManager;
 import com.skyauctions.gui.SkyAuctionsHolder;
 import com.skyauctions.util.ColorUtil;
@@ -46,6 +47,119 @@ public class GuiListener implements Listener {
             case SELL_ANVIL -> handleAnvilClick(event, player, holder);
         }
     }
+
+    // =====================================================
+    // CONFIRM PURCHASE / CONFIRM LISTING POPUP
+    // =====================================================
+
+    @EventHandler
+    public void onConfirmClick(InventoryClickEvent event) {
+        if (!(event.getInventory().getHolder() instanceof ConfirmGuiHolder holder)) return;
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+
+        event.setCancelled(true);
+        int slot = event.getRawSlot();
+
+        if (slot != GuiManager.CONFIRM_YES_SLOT && slot != GuiManager.CONFIRM_NO_SLOT) return;
+
+        boolean confirmed = slot == GuiManager.CONFIRM_YES_SLOT;
+        holder.setResolved(true);
+
+        if (holder.getAction() == ConfirmGuiHolder.Action.PURCHASE) {
+            if (confirmed) {
+                finalizePurchase(player, holder.getAuctionId(), holder.getReturnPage());
+            } else {
+                plugin.getGuiManager().openMain(player, holder.getReturnPage());
+            }
+            return;
+        }
+
+        // Action == SELL
+        if (confirmed) {
+            finalizeListing(player, holder.getPendingItem(), holder.getPendingPrice());
+        } else {
+            returnItem(player, holder.getPendingItem());
+            player.closeInventory();
+        }
+    }
+
+    @EventHandler
+    public void onConfirmClose(InventoryCloseEvent event) {
+        if (!(event.getInventory().getHolder() instanceof ConfirmGuiHolder holder)) return;
+        if (holder.isResolved()) return;
+        // Only the SELL confirm popup is holding an item that needs to be
+        // returned if the player closes it (e.g. presses Escape) without choosing.
+        if (holder.getAction() != ConfirmGuiHolder.Action.SELL) return;
+        if (!(event.getPlayer() instanceof Player player)) return;
+
+        returnItem(player, holder.getPendingItem());
+    }
+
+    private void finalizePurchase(Player player, UUID auctionId, int returnPage) {
+        Auction auction = plugin.getAuctionManager().get(auctionId);
+        if (auction == null || auction.getStatus() != Auction.Status.ACTIVE) {
+            player.sendMessage(plugin.getConfigManager().msg("buy.already-sold"));
+            plugin.getGuiManager().openMain(player, returnPage);
+            return;
+        }
+
+        if (!plugin.getEconomyManager().isEnabled()) {
+            player.sendMessage(plugin.getConfigManager().msg("buy.economy-disabled"));
+            return;
+        }
+
+        if (!plugin.getEconomyManager().has(player, auction.getPrice())) {
+            player.sendMessage(plugin.getConfigManager().msg("buy.not-enough-money"));
+            plugin.getGuiManager().openMain(player, returnPage);
+            return;
+        }
+
+        boolean success = plugin.getAuctionManager().buy(player, auction);
+        if (!success) {
+            player.sendMessage(plugin.getConfigManager().msg("buy.inventory-full"));
+            return;
+        }
+
+        String currency = plugin.getConfig().getString("settings.currency-symbol", "$");
+        player.sendMessage(plugin.getConfigManager().msg("buy.success-buyer", Map.of(
+                "amount", String.valueOf(auction.getItem().getAmount()),
+                "item", ItemUtil.niceName(auction.getItem()),
+                "price", plugin.getEconomyManager().format(auction.getPrice()),
+                "currency", currency
+        )));
+
+        Player seller = org.bukkit.Bukkit.getPlayer(auction.getSellerId());
+        if (seller != null) {
+            seller.sendMessage(plugin.getConfigManager().msg("buy.success-seller", Map.of(
+                    "buyer", player.getName(),
+                    "amount", String.valueOf(auction.getItem().getAmount()),
+                    "item", ItemUtil.niceName(auction.getItem()),
+                    "price", plugin.getEconomyManager().format(auction.getPendingBalance()),
+                    "currency", currency
+            )));
+        }
+
+        plugin.getGuiManager().openMain(player, returnPage);
+    }
+
+    private void finalizeListing(Player player, ItemStack item, double price) {
+        plugin.getAuctionManager().createListing(player, item, price);
+        player.closeInventory();
+
+        String currency = plugin.getConfig().getString("settings.currency-symbol", "$");
+        player.sendMessage(plugin.getConfigManager().msg("sell.success", Map.of(
+                "amount", String.valueOf(item.getAmount()),
+                "item", ItemUtil.niceName(item),
+                "price", plugin.getEconomyManager().format(price),
+                "currency", currency
+        )));
+
+        plugin.broadcastSale(player, item, price);
+    }
+
+    // =====================================================
+    // MAIN GUI
+    // =====================================================
 
     private void handleMainClick(InventoryClickEvent event, Player player, SkyAuctionsHolder holder) {
         event.setCancelled(true);
@@ -105,32 +219,8 @@ public class GuiListener implements Listener {
             return;
         }
 
-        boolean success = plugin.getAuctionManager().buy(player, auction);
-        if (!success) {
-            player.sendMessage(plugin.getConfigManager().msg("buy.inventory-full"));
-            return;
-        }
-
-        String currency = plugin.getConfig().getString("settings.currency-symbol", "$");
-        player.sendMessage(plugin.getConfigManager().msg("buy.success-buyer", Map.of(
-                "amount", String.valueOf(auction.getItem().getAmount()),
-                "item", ItemUtil.niceName(auction.getItem()),
-                "price", plugin.getEconomyManager().format(auction.getPrice()),
-                "currency", currency
-        )));
-
-        Player seller = org.bukkit.Bukkit.getPlayer(auction.getSellerId());
-        if (seller != null) {
-            seller.sendMessage(plugin.getConfigManager().msg("buy.success-seller", Map.of(
-                    "buyer", player.getName(),
-                    "amount", String.valueOf(auction.getItem().getAmount()),
-                    "item", ItemUtil.niceName(auction.getItem()),
-                    "price", plugin.getEconomyManager().format(auction.getPendingBalance()),
-                    "currency", currency
-            )));
-        }
-
-        plugin.getGuiManager().openMain(player, holder.getPage());
+        // Instead of buying immediately, show a "Confirm Purchase" popup.
+        plugin.getGuiManager().openConfirmPurchase(player, auction, holder.getPage());
     }
 
     private void handleMyListingsClick(InventoryClickEvent event, Player player, SkyAuctionsHolder holder) {
@@ -296,19 +386,13 @@ public class GuiListener implements Listener {
             return;
         }
 
-        plugin.getAuctionManager().createListing(player, item, price);
+        // Item is now "in flight" to the Confirm Listing popup, so mark this
+        // anvil session as confirmed to prevent onClose() from returning the
+        // item to the player's inventory when we close it below.
         holder.setConfirmed(true);
         player.closeInventory();
 
-        String currency = plugin.getConfig().getString("settings.currency-symbol", "$");
-        player.sendMessage(plugin.getConfigManager().msg("sell.success", Map.of(
-                "amount", String.valueOf(item.getAmount()),
-                "item", ItemUtil.niceName(item),
-                "price", plugin.getEconomyManager().format(price),
-                "currency", currency
-        )));
-
-        plugin.broadcastSale(player, item, price);
+        plugin.getGuiManager().openConfirmSell(player, item, price);
     }
 
     @EventHandler
